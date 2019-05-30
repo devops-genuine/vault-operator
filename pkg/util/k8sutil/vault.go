@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 	"time"
 
+    "k8s.io/api/core/v1"
 	api "github.com/coreos/vault-operator/pkg/apis/vault/v1alpha1"
 	"github.com/coreos/vault-operator/pkg/util/vaultutil"
 
