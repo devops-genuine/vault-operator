@@ -15,7 +15,6 @@
 package v1alpha1
 
 import (
-	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -57,6 +56,15 @@ type VaultServiceSpec struct {
 
 	// Base image to use for a Vault deployment.
 	BaseImage string `json:"baseImage"`
+
+	// Set Service Account to start POD
+	ServiceAccountName string `json:"serviceAccountName,omitempty"`
+
+	// Kubernetes Node Role to Apply with PodAntiAffinity (Default kubernetes.io/role=node)
+	PodAntiAffinityNodeRole string `json:"podAntiAffinityNodeRole"`
+
+	// Set ImagePullSecrets
+	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets,omitempty" patchStrategy:"merge" patchMergeKey:"name" protobuf:"bytes,15,rep,name=imagePullSecrets"`
 
 	// Version of Vault to be deployed.
 	Version string `json:"version"`
@@ -104,6 +112,17 @@ func (v *VaultService) SetDefaults() bool {
 		}}
 		changed = true
 	}
+
+	if len(vs.ServiceAccountName) == 0 {
+		vs.ServiceAccountName = "default"
+		changed = true
+	}
+
+	if len(vs.PodAntiAffinityNodeRole) == 0 {
+		vs.PodAntiAffinityNodeRole = "node"
+		changed = true
+	}
+
 	return changed
 }
 
