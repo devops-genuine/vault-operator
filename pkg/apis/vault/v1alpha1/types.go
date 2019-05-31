@@ -67,6 +67,9 @@ type VaultServiceSpec struct {
 	// Set ImagePullSecrets
 	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets,omitempty" patchStrategy:"merge" patchMergeKey:"name" protobuf:"bytes,15,rep,name=imagePullSecrets"`
 
+	// Set AWS KMS Access Seeret
+	AWSKMSSecret string `json:"awsKMSSecret,omitempty"`
+
 	// Version of Vault to be deployed.
 	Version string `json:"version"`
 

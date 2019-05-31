@@ -19,7 +19,10 @@ import (
 	"fmt"
 	"path/filepath"
 
+	api "github.com/coreos/vault-operator/pkg/apis/vault/v1alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	vaultapi "github.com/hashicorp/vault/api"
+	"k8s.io/client-go/kubernetes"
 )
 
 const (
@@ -86,4 +89,26 @@ func NewClient(hostname string, port string, tlsConfig *vaultapi.TLSConfig) (*va
 	cfg.Address = podURL
 	cfg.ConfigureTLS(tlsConfig)
 	return vaultapi.NewClient(cfg)
+}
+
+// Auto Unseal Data
+func AutoUnsealConfig(kubecli kubernetes.Interface, data string, v *api.VaultService) string {
+	//kubecli := kubernetes.Interface
+	se, err := kubecli.CoreV1().Secrets(v.Namespace).Get(v.Spec.AWSKMSSecret, metav1.GetOptions{})
+	if err != nil {
+		str := fmt.Sprintf("Setup AWS KMS Config Failed: Get secret failed: %v", err)
+		return str
+	}
+
+	buf := bytes.NewBufferString(data)
+	buf.WriteString(`
+seal "awskms" {
+  region     = "`+string(se.Data["AWSKMSRegion"])+`"
+  access_key = "`+string(se.Data["AWSKMSAccessKey"])+`"
+  secret_key = "`+string(se.Data["AWSKMSSecretKey"])+`"
+  kms_key_id = "`+string(se.Data["AWSKMSKeyId"])+`"
+}
+`)
+
+	return buf.String()
 }
