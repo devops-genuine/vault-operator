@@ -67,8 +67,14 @@ type VaultServiceSpec struct {
 	// Set ImagePullSecrets
 	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets,omitempty" patchStrategy:"merge" patchMergeKey:"name" protobuf:"bytes,15,rep,name=imagePullSecrets"`
 
-	// Set AWS KMS Access Seeret
-	AWSKMSSecret string `json:"awsKMSSecret,omitempty"`
+	// Enable auto unsealing
+	EnableAutoUnsealing bool `json:"enableAutoUnsealing,omitempty"`
+
+	// Avaialble provider : awskms, azurekeyvault, gcpckms, alicloudkms
+	AutoUnsealProvider string `json:"autoUnsealProvider,omitempty"`
+
+	// Set Secret For Access Provider
+	AutoUnsealProviderSecret string `json:"autoUnsealProviderSecret,omitempty"`
 
 	// Version of Vault to be deployed.
 	Version string `json:"version"`

@@ -202,7 +202,11 @@ func (v *Vaults) prepareVaultConfig(vr *api.VaultService) error {
 		cfgData = cm.Data[filepath.Base(k8sutil.VaultConfigPath)]
 	}
 	cfgData = vaultutil.NewConfigWithDefaultParams(cfgData)
-	cfgData = vaultutil.AutoUnsealConfig(v.kubecli, cfgData, vr)
+
+	if ( vr.Spec.EnableAutoUnsealing == true ){
+	   cfgData = vaultutil.AutoUnsealConfig(v.kubecli, cfgData, vr)
+	}
+	
 	cfgData = vaultutil.NewConfigWithEtcd(cfgData, k8sutil.EtcdURLForVault(vr.Name))
 
 	cm := &v1.ConfigMap{

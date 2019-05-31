@@ -93,22 +93,55 @@ func NewClient(hostname string, port string, tlsConfig *vaultapi.TLSConfig) (*va
 
 // Auto Unseal Data
 func AutoUnsealConfig(kubecli kubernetes.Interface, data string, v *api.VaultService) string {
-	//kubecli := kubernetes.Interface
-	se, err := kubecli.CoreV1().Secrets(v.Namespace).Get(v.Spec.AWSKMSSecret, metav1.GetOptions{})
+
+	se, err := kubecli.CoreV1().Secrets(v.Namespace).Get(v.Spec.AutoUnsealProviderSecret, metav1.GetOptions{})
 	if err != nil {
 		str := fmt.Sprintf("Setup AWS KMS Config Failed: Get secret failed: %v", err)
 		return str
 	}
 
 	buf := bytes.NewBufferString(data)
-	buf.WriteString(`
+
+	if ( v.Spec.AutoUnsealProvider == "awskms" ){
+		buf.WriteString(`
 seal "awskms" {
-  region     = "`+string(se.Data["AWSKMSRegion"])+`"
-  access_key = "`+string(se.Data["AWSKMSAccessKey"])+`"
-  secret_key = "`+string(se.Data["AWSKMSSecretKey"])+`"
-  kms_key_id = "`+string(se.Data["AWSKMSKeyId"])+`"
+  region     = "`+string(se.Data["region"])+`"
+  access_key = "`+string(se.Data["access_key"])+`"
+  secret_key = "`+string(se.Data["secret_key"])+`"
+  kms_key_id = "`+string(se.Data["kms_key_id"])+`"
+  endpoint = "`+string(se.Data["endpoint"])+`"
 }
 `)
+	}else if ( v.Spec.AutoUnsealProvider == "azurekeyvault" ){
+		buf.WriteString(`
+seal "azurekeyvault" {
+  tenant_id     = "`+string(se.Data["tenant_id"])+`"
+  client_id = "`+string(se.Data["client_id"])+`"
+  client_secret = "`+string(se.Data["client_secret"])+`"
+  vault_name = "`+string(se.Data["vault_name"])+`"
+  key_name = "`+string(se.Data["key_name"])+`"
+}
+`)
+	}else if ( v.Spec.AutoUnsealProvider == "gcpckms" ){
+		buf.WriteString(`
+seal "gcpckms" {
+  credentials     = "`+string(se.Data["credentials"])+`"
+  project = "`+string(se.Data["project"])+`"
+  region = "`+string(se.Data["region"])+`"
+  key_ring = "`+string(se.Data["key_ring"])+`"
+  crypto_key = "`+string(se.Data["crypto_key"])+`"
+}
+`)
+	}else if ( v.Spec.AutoUnsealProvider == "alicloudkms" ){
+		buf.WriteString(`
+seal "alicloudkms" {
+  region     = "`+string(se.Data["region"])+`"
+  access_key = "`+string(se.Data["access_key"])+`"
+  secret_key = "`+string(se.Data["secret_key"])+`"
+  kms_key_id = "`+string(se.Data["kms_key_id"])+`"
+}
+`)
+	}
 
 	return buf.String()
 }
