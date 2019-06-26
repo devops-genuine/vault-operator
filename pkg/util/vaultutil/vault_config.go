@@ -109,7 +109,6 @@ seal "awskms" {
   access_key = "`+string(se.Data["access_key"])+`"
   secret_key = "`+string(se.Data["secret_key"])+`"
   kms_key_id = "`+string(se.Data["kms_key_id"])+`"
-  endpoint = "`+string(se.Data["endpoint"])+`"
 }
 `)
 	}else if ( v.Spec.AutoUnsealProvider == "azurekeyvault" ){
@@ -142,6 +141,24 @@ seal "alicloudkms" {
 }
 `)
 	}
+	
+	return buf.String()
+}
 
+
+func EnableWebUIConfig(kubecli kubernetes.Interface, data string, v *api.VaultService) string {
+
+	fmt.Printf("Enabling WebUI\n")
+
+	buf := bytes.NewBufferString(data)
+
+	if ( v.Spec.EnableWebUI == true ){
+		buf.WriteString(`
+ui = true
+`)}else{
+	buf.WriteString(`
+ui = false
+`)
+  }
 	return buf.String()
 }

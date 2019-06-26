@@ -207,6 +207,10 @@ func (v *Vaults) prepareVaultConfig(vr *api.VaultService) error {
 	   cfgData = vaultutil.AutoUnsealConfig(v.kubecli, cfgData, vr)
 	}
 	
+    if ( vr.Spec.EnableWebUI == true ){
+	   cfgData = vaultutil.EnableWebUIConfig(v.kubecli, cfgData, vr)
+	}
+
 	cfgData = vaultutil.NewConfigWithEtcd(cfgData, k8sutil.EtcdURLForVault(vr.Name))
 
 	cm := &v1.ConfigMap{

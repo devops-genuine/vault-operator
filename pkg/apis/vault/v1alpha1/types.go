@@ -64,8 +64,8 @@ type VaultServiceSpec struct {
 	// Kubernetes Node Role to Apply with PodAntiAffinity (Default kubernetes.io/role=node)
 	PodAntiAffinityNodeRole string `json:"podAntiAffinityNodeRole"`
 
-	// Set ImagePullSecrets
-	ImagePullSecrets []v1.LocalObjectReference `json:"imagePullSecrets,omitempty" patchStrategy:"merge" patchMergeKey:"name" protobuf:"bytes,15,rep,name=imagePullSecrets"`
+	// Enable WebUI
+	EnableWebUI bool `json:"enableWebUI,omitempty"`
 
 	// Enable auto unsealing
 	EnableAutoUnsealing bool `json:"enableAutoUnsealing,omitempty"`

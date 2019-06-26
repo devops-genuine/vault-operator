@@ -243,7 +243,6 @@ func DeployVault(kubecli kubernetes.Interface, v *api.VaultService) error {
 		},
 		Spec: v1.PodSpec{
 			ServiceAccountName: v.Spec.ServiceAccountName,
-			ImagePullSecrets:   v.Spec.ImagePullSecrets,
 			NodeSelector: map[string]string{
 				"kubernetes.io/role": v.Spec.PodAntiAffinityNodeRole,
 			},
