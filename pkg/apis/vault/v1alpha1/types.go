@@ -58,6 +58,24 @@ type VaultServiceSpec struct {
 	// Base image to use for a Vault deployment.
 	BaseImage string `json:"baseImage"`
 
+	// Set Service Account to start POD
+	ServiceAccountName string `json:"serviceAccountName,omitempty"`
+
+	// Kubernetes Node Role to Apply with PodAntiAffinity (Default kubernetes.io/role=node)
+	PodAntiAffinityNodeRole string `json:"podAntiAffinityNodeRole"`
+
+	// Enable WebUI
+	EnableWebUI bool `json:"enableWebUI,omitempty"`
+
+	// Enable auto unsealing
+	EnableAutoUnsealing bool `json:"enableAutoUnsealing,omitempty"`
+
+	// Avaialble provider : awskms, azurekeyvault, gcpckms, alicloudkms
+	AutoUnsealProvider string `json:"autoUnsealProvider,omitempty"`
+
+	// Set Secret For Access Provider
+	AutoUnsealProviderSecret string `json:"autoUnsealProviderSecret,omitempty"`
+
 	// Version of Vault to be deployed.
 	Version string `json:"version"`
 
@@ -104,6 +122,17 @@ func (v *VaultService) SetDefaults() bool {
 		}}
 		changed = true
 	}
+
+	if len(vs.ServiceAccountName) == 0 {
+		vs.ServiceAccountName = "default"
+		changed = true
+	}
+
+	if len(vs.PodAntiAffinityNodeRole) == 0 {
+		vs.PodAntiAffinityNodeRole = "node"
+		changed = true
+	}
+
 	return changed
 }
 

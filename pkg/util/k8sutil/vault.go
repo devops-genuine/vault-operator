@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 	"time"
 
+    "k8s.io/api/core/v1"
 	api "github.com/coreos/vault-operator/pkg/apis/vault/v1alpha1"
 	"github.com/coreos/vault-operator/pkg/util/vaultutil"
 
@@ -28,7 +29,6 @@ import (
 	"github.com/coreos/etcd-operator/pkg/util/retryutil"
 	vaultapi "github.com/hashicorp/vault/api"
 	appsv1beta1 "k8s.io/api/apps/v1beta1"
-	"k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -242,6 +242,23 @@ func DeployVault(kubecli kubernetes.Interface, v *api.VaultService) error {
 			Labels: selector,
 		},
 		Spec: v1.PodSpec{
+			ServiceAccountName: v.Spec.ServiceAccountName,
+			NodeSelector: map[string]string{
+				"kubernetes.io/role": v.Spec.PodAntiAffinityNodeRole,
+			},
+			Affinity: &v1.Affinity{
+				PodAntiAffinity: &v1.PodAntiAffinity{
+					RequiredDuringSchedulingIgnoredDuringExecution: []v1.PodAffinityTerm{
+						{
+							// set anti-affinity to the etcd pods that belongs to the same cluster
+							LabelSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+								"kubernetes.io/role": v.Spec.PodAntiAffinityNodeRole,
+							}},
+							TopologyKey: "kubernetes.io/hostname",
+						},
+					},
+				},
+			},
 			Containers: []v1.Container{vaultContainer(v), statsdExporterContainer()},
 			Volumes: []v1.Volume{{
 				Name: vaultConfigVolName,

@@ -19,7 +19,10 @@ import (
 	"fmt"
 	"path/filepath"
 
+	api "github.com/coreos/vault-operator/pkg/apis/vault/v1alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	vaultapi "github.com/hashicorp/vault/api"
+	"k8s.io/client-go/kubernetes"
 )
 
 const (
@@ -86,4 +89,76 @@ func NewClient(hostname string, port string, tlsConfig *vaultapi.TLSConfig) (*va
 	cfg.Address = podURL
 	cfg.ConfigureTLS(tlsConfig)
 	return vaultapi.NewClient(cfg)
+}
+
+// Auto Unseal Data
+func AutoUnsealConfig(kubecli kubernetes.Interface, data string, v *api.VaultService) string {
+
+	se, err := kubecli.CoreV1().Secrets(v.Namespace).Get(v.Spec.AutoUnsealProviderSecret, metav1.GetOptions{})
+	if err != nil {
+		str := fmt.Sprintf("Setup AWS KMS Config Failed: Get secret failed: %v", err)
+		return str
+	}
+
+	buf := bytes.NewBufferString(data)
+
+	if ( v.Spec.AutoUnsealProvider == "awskms" ){
+		buf.WriteString(`
+seal "awskms" {
+  region     = "`+string(se.Data["region"])+`"
+  access_key = "`+string(se.Data["access_key"])+`"
+  secret_key = "`+string(se.Data["secret_key"])+`"
+  kms_key_id = "`+string(se.Data["kms_key_id"])+`"
+}
+`)
+	}else if ( v.Spec.AutoUnsealProvider == "azurekeyvault" ){
+		buf.WriteString(`
+seal "azurekeyvault" {
+  tenant_id     = "`+string(se.Data["tenant_id"])+`"
+  client_id = "`+string(se.Data["client_id"])+`"
+  client_secret = "`+string(se.Data["client_secret"])+`"
+  vault_name = "`+string(se.Data["vault_name"])+`"
+  key_name = "`+string(se.Data["key_name"])+`"
+}
+`)
+	}else if ( v.Spec.AutoUnsealProvider == "gcpckms" ){
+		buf.WriteString(`
+seal "gcpckms" {
+  credentials     = "`+string(se.Data["credentials"])+`"
+  project = "`+string(se.Data["project"])+`"
+  region = "`+string(se.Data["region"])+`"
+  key_ring = "`+string(se.Data["key_ring"])+`"
+  crypto_key = "`+string(se.Data["crypto_key"])+`"
+}
+`)
+	}else if ( v.Spec.AutoUnsealProvider == "alicloudkms" ){
+		buf.WriteString(`
+seal "alicloudkms" {
+  region     = "`+string(se.Data["region"])+`"
+  access_key = "`+string(se.Data["access_key"])+`"
+  secret_key = "`+string(se.Data["secret_key"])+`"
+  kms_key_id = "`+string(se.Data["kms_key_id"])+`"
+}
+`)
+	}
+	
+	return buf.String()
+}
+
+
+func EnableWebUIConfig(kubecli kubernetes.Interface, data string, v *api.VaultService) string {
+
+	fmt.Printf("Enabling WebUI\n")
+
+	buf := bytes.NewBufferString(data)
+
+	if ( v.Spec.EnableWebUI == true ){
+		buf.WriteString(`
+ui = true
+`)}else{
+	buf.WriteString(`
+ui = false
+`)
+  }
+	return buf.String()
 }
